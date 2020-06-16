@@ -8,7 +8,7 @@ edition = "2018"
 crate-type = ["cdylib"]
 
 [dependencies]
-pamsm = "0.1"
+pamsm = "0.3.3"
 rsa = "0.3.0"
 rand = "0.7.3"
 base64 = "0.12.2"

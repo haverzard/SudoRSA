@@ -1,3 +1,4 @@
+#[macro_use]
 extern crate pamsm;
 extern crate rand;
 extern crate base64;
@@ -5,13 +6,15 @@ extern crate base64;
 use std::fs;
 use rsa::{PublicKey, PaddingScheme, RSAPrivateKey, RSAPublicKey};
 use rand::{thread_rng, Rng, distributions::Alphanumeric, rngs::OsRng};
-use pamsm::pam_raw::{PamError, PamFlag};
-use pamsm::{Pam, PamServiceModule};
+use pamsm::{Pam, PamServiceModule, PamError, PamFlag};
 
-struct RSAPam;
+struct PamRsa;
 
-impl PamServiceModule for RSAPam {
-    fn authenticate(self: &Self, pamh: Pam, _flags: PamFlag, args: Vec<String>) -> PamError {
+impl PamServiceModule for PamRsa {
+    fn authenticate(_pamh: Pam, _flags: PamFlag, _args: Vec<String>) -> PamError {
+        //let r = pamh.get_authtok();
+        // println!("Auth token: {:?}", r);
+        // Read private key
         let file_contents = fs::read_to_string("/rsa_pam.private").expect("Please setup your private key properly.");
         let der_encoded = file_contents
             .lines()
@@ -23,6 +26,7 @@ impl PamServiceModule for RSAPam {
         let der_bytes = base64::decode(&der_encoded).expect("Your key format is wrong!");
         let private_key = RSAPrivateKey::from_pkcs1(&der_bytes).expect("Your key format is wrong!");
 
+        // Read public key
         let file_contents = fs::read_to_string("/rsa_pam.public");
         match file_contents {
             Ok(contents) => {
@@ -36,7 +40,7 @@ impl PamServiceModule for RSAPam {
                 let der_bytes = base64::decode(&der_encoded);
                 match der_bytes {
                     Ok(ok_bytes) => {
-                        let public_key_res = RSAPublicKey::from_pkcs1(&ok_bytes);
+                        let public_key_res = RSAPublicKey::from_pkcs8(&ok_bytes);
                         match public_key_res {
                             Ok(public_key) => {
                                 let random_text : String = thread_rng()
@@ -71,4 +75,21 @@ impl PamServiceModule for RSAPam {
         }
         
     }
+    fn open_session(_pamh: Pam, _flags: PamFlag, _args: Vec<String>) -> PamError {
+        PamError::SUCCESS
+    }
+    fn close_session(_pamh: Pam, _flags: PamFlag, _args: Vec<String>) -> PamError {
+        PamError::SUCCESS
+    }
+    fn setcred(_pamh: Pam, _flags: PamFlag, _args: Vec<String>) -> PamError {
+        PamError::SUCCESS
+    }
+    fn acct_mgmt(_pamh: Pam, _flags: PamFlag, _args: Vec<String>) -> PamError {
+        PamError::SUCCESS
+    }
+    fn chauthtok(_pamh: Pam, _flags: PamFlag, _args: Vec<String>) -> PamError {
+        PamError::SUCCESS
+    }
 }
+
+pam_module!(PamRsa);

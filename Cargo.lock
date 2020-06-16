@@ -214,13 +214,9 @@ checksum = "2839e79665f131bdb5782e51f2c6c9599c133c6098982a54c794358bf432529c"
 
 [[package]]
 name = "pamsm"
-version = "0.1.0"
+version = "0.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c16d67fb33f4e9e6458487c3bc2be1590f80200f95d95bebc3f8235f5d729f45"
-dependencies = [
- "libc",
- "time",
-]
+checksum = "0477e904be95ca350676c9e9e73776d2316b7a33d3d9fb72bc56884a2366e307"
 
 [[package]]
 name = "pem"
