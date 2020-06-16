@@ -1,0 +1,14 @@
+[package]
+name = "rsapam"
+version = "0.1.0"
+authors = ["haverzard"]
+edition = "2018"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+pamsm = "0.1"
+rsa = "0.3.0"
+rand = "0.7.3"
+base64 = "0.12.2"
