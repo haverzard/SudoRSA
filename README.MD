@@ -27,10 +27,7 @@ Example:
 ```
 
 ### Setup your keys
-#### Private key
-Put your private key in in the file path /rsa_pam.private
-#### Public keys
-Put your public keys in the folder path /keys and we will iterate all of them.
+Run `just cli` and it will generate private key automatically. Please create public key to your selected device flash disk.
 
 ### Generating your pam_rsa.so
 #### Ubuntu and similars
