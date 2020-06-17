@@ -12,8 +12,6 @@ struct PamRsa;
 
 impl PamServiceModule for PamRsa {
     fn authenticate(_pamh: Pam, _flags: PamFlag, _args: Vec<String>) -> PamError {
-        //let r = pamh.get_authtok();
-        // println!("Auth token: {:?}", r);
         // Read private key
         let file_contents = fs::read_to_string("/rsa_pam.private").expect("Please setup your private key properly.");
         let der_encoded = file_contents
