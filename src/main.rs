@@ -1,269 +1,93 @@
 #[macro_use]
 extern crate colour;
+extern crate gio;
+extern crate glib;
+extern crate gtk;
 
-use std::{fs, process::Command, str, io::{stdin, stdout, Write}};
-use rsa::{PublicKey, PaddingScheme, RSAPrivateKey, RSAPublicKey};
-use rand::{thread_rng, Rng, distributions::Alphanumeric, rngs::OsRng};
+mod utility;
 
-fn gen_priv_key() {
-    // Private key generation
-    white_ln!("Generating new private key...");
-    let _ = Command::new("openssl")
-        .arg("genrsa")
-        .arg("-out")
-        .arg("/rsa_pam.private")
-        .arg("1024")
-        .output()
-        .expect("Something went wrong when using command (maybe lsblk not supported)");
-    cyan_ln!("Private key generation result: ✅");
+use atk::prelude::*;
+use gio::prelude::*;
+use glib::clone;
+use gtk::prelude::*;
+
+use std::env::args;
+
+// fn create_main_window(application: &gtk::Application) -> gtk::ApplicationWindow {
+
+// }
+
+fn gen_priv_key(application: &gtk::Application) {
+    utility::gen_priv_key();
+    let sub_window = gtk::Window::new(gtk::WindowType::Toplevel);
+    application.add_window(&sub_window);
+    sub_window.set_title("Private Key Generation");
+    sub_window.set_position(gtk::WindowPosition::Center);
+    sub_window.set_default_size(200, 100);
+    let res = gtk::Label::new(Some("Completed!"));
+    sub_window.add(&res);
+    sub_window.show_all();
 }
 
-fn gen_pub_key() {
-    // List of devices' paths
-    let output = Command::new("lsblk")
-        .arg("--output")
-        .arg("MOUNTPOINT")
-        .output()
-        .expect("Something went wrong when using command (maybe lsblk not supported)");
-    let paths : Vec<&str> = str::from_utf8(&output.stdout).unwrap().split('\n').filter(|s| s != &"" && s != &"/").collect();
-
-    // Choose a device
-    green_ln!("Choose the device you want to setup:");
-    for i in 1..paths.len() {
-        green_ln!("{}. {}", i, paths[i]);
-    }
-    white!("Enter your choice in number: ");
-    let _ = stdout().flush();
-    let mut line = String::from("");
-    stdin().read_line(&mut line).unwrap();
-    match line.trim().parse() {
-        Ok(res) => {
-            // Checking range
-            let choice : usize = res;
-            if choice > 0 && choice < paths.len() {
-                // Enter key file name
-                let _ = fs::create_dir(paths[choice].to_owned()+"/keys");
-                white!("Enter your file name: ");
-                let _ = stdout().flush();
-                let mut line = String::from("");
-                stdin().read_line(&mut line).unwrap();
-                
-                // Public key generation
-                white_ln!("Generating new public key...");
-                let _ = Command::new("openssl")
-                    .arg("rsa")
-                    .arg("-in")
-                    .arg("/rsa_pam.private")
-                    .arg("-out")
-                    .arg(paths[choice].to_owned()+"/keys/"+line.trim())
-                    .arg("-pubout")
-                    .arg("-outform")
-                    .arg("PEM")
-                    .output()
-                    .expect("Something went wrong when using command (maybe lsblk not supported)");
-                cyan_ln!("Public key generation result: ✅");
-            } else {
-                red_ln!("Your input is out of range!");
-            }
-        },
-        Err(_) => {
-            red_ln!("Please enter a valid number!");
-        }
-    };
+fn gen_pub_key(application: &gtk::Application) {
+    //utility::gen_priv_key();
+    let sub_window = gtk::Window::new(gtk::WindowType::Toplevel);
+    application.add_window(&sub_window);
+    sub_window.set_title("Pub Key Generation");
+    sub_window.set_position(gtk::WindowPosition::Center);
+    sub_window.set_default_size(400, 200);
+    let res = gtk::Label::new(Some("Completed!"));
+    let entry = gtk::Entry::new();
+    sub_window.add(&entry);
+    sub_window.show_all();
 }
 
-fn pub_key_checker(pub_file_path: String) -> Option<()> {
-    // Read private key
-    let file_contents = fs::read_to_string("/rsa_pam.private").expect("Please setup your private key properly.");
-    let der_encoded = file_contents
-        .lines()
-        .filter(|line| !line.starts_with("-"))
-        .fold(String::new(), |mut data, line| {
-            data.push_str(&line);
-            data
-        });
-    let der_bytes = base64::decode(&der_encoded).expect("Your key format is wrong!");
-    let private_key = RSAPrivateKey::from_pkcs1(&der_bytes).expect("Your key format is wrong!");
+fn build_ui(application: &gtk::Application) {
+    let window = gtk::ApplicationWindow::new(application);
 
-    // Read public key
-    let file_contents = fs::read_to_string(pub_file_path);
-    match file_contents {
-        Ok(contents) => {
-            let der_encoded = contents
-                .lines()
-                .filter(|line| !line.starts_with("-"))
-                .fold(String::new(), |mut data, line| {
-                    data.push_str(&line);
-                    data
-                });
-            let der_bytes = base64::decode(&der_encoded);
-            match der_bytes {
-                Ok(ok_bytes) => {
-                    let public_key_res = RSAPublicKey::from_pkcs8(&ok_bytes);
-                    match public_key_res {
-                        Ok(public_key) => {
-                            let random_text : String = thread_rng()
-                                .sample_iter(&Alphanumeric)
-                                .take(20)
-                                .collect();
-                            let random_text = random_text.as_bytes();
-                            
-                            let mut rng = OsRng;
-                            let padding = PaddingScheme::new_pkcs1v15_encrypt();
-                            let enc_data = public_key
-                                .encrypt(&mut rng, padding, &random_text[..])
-                                .expect("Something wrong happens on the encryption process");
-                            let padding = PaddingScheme::new_pkcs1v15_encrypt();
-                            let dec_data = private_key
-                                .decrypt(padding, &enc_data)
-                                .expect("Something wrong happens on the decryption process");
+    window.set_title("Sudo RSA");
+    window.set_position(gtk::WindowPosition::Center);
+    window.set_size_request(1000, 800);
 
-                            if dec_data == random_text {
-                                Some(())
-                            } else {
-                                None
-                            }
-                        },
-                        Err(_) => None
-                    }
-                },
-                Err(_) => None
-            }
-        },
-        Err(_) => None
-    }
-}
+    let outer_box = gtk::Box::new(gtk::Orientation::Horizontal, 10);
+    let v_box = gtk::Box::new(gtk::Orientation::Vertical, 10);
+    let title_box = gtk::Box::new(gtk::Orientation::Vertical, 10);
+    let title = gtk::Label::new(Some("Sudo RSA"));
+    let gen_priv_btn = gtk::Button::new_with_label("Generate private key");
+    let gen_pub_btn = gtk::Button::new_with_label("Generate public key");
+    let check_pub_btn = gtk::Button::new_with_label("Check public key");
 
-fn check_pub_key() {
-    // List of devices' paths
-    let output = Command::new("lsblk")
-        .arg("--output")
-        .arg("MOUNTPOINT")
-        .output()
-        .expect("Something went wrong when using command (maybe lsblk not supported)");
-    let paths : Vec<&str> = str::from_utf8(&output.stdout).unwrap().split('\n').filter(|s| s != &"" && s != &"/").collect();
+    title_box.pack_start(&title, false, false, 0);
+    title_box.set_size_request(200, 200);
+    v_box.set_size_request(500, 800);
+    gen_priv_btn.set_size_request(200, 50);
 
-    // Choose a device
-    green_ln!("Choose the device you want to check:");
-    for i in 1..paths.len() {
-        green_ln!("{}. {}", i, paths[i]);
-    }
-    white!("Enter your choice in number: ");
-    let _ = stdout().flush();
-    let mut line = String::from("");
-    stdin().read_line(&mut line).unwrap();
-    match line.trim().parse() {
-        Ok(res) => {
-            // Checking range
-            let choice : usize = res;
-            if choice > 0 && choice < paths.len() {
-                // Enter key file name
-                let _ = fs::create_dir(paths[choice].to_owned()+"/keys");
-                white!("Enter your file name: ");
-                let _ = stdout().flush();
-                let mut line = String::from("");
-                stdin().read_line(&mut line).unwrap();
-                
-                // Public key generation
-                white_ln!("Checking public key...");
-                match pub_key_checker(paths[choice].to_owned()+"/keys/"+line.trim()) {
-                    Some(_) => {
-                        cyan_ln!("Public key check result: ✅");
-                    },
-                    None => {
-                        red_ln!("Public key check result: ❌");
-                    }
-                }
-            } else {
-                red_ln!("Your input is out of range!");
-            }
-        },
-        Err(_) => {
-            red_ln!("Please enter a valid number!");
-        }
-    };
-}
+    gen_priv_btn.connect_clicked(clone!(@weak application => move |_| { gen_priv_key(&application); }));
+    gen_pub_btn.connect_clicked(clone!(@weak application => move |_| { gen_pub_key(&application); }));
 
-fn bad_priv_key() {
-    white_ln!("Private key check result: ❌");
-    gen_priv_key();
+    v_box.pack_start(&title_box, false, false, 0);
+    v_box.pack_start(&gen_priv_btn, false, false, 0);
+    v_box.pack_start(&gen_pub_btn, false, false, 0);
+    v_box.pack_start(&check_pub_btn, false, false, 0);
+
+    let dummy_left = gtk::Box::new(gtk::Orientation::Horizontal, 10);
+    dummy_left.set_size_request(250,800);
+    outer_box.pack_start(&dummy_left, false, false, 0);
+    outer_box.pack_start(&v_box, false, false, 0);
+    window.add(&outer_box);
+    window.show_all();
 }
 
 fn main() {
-    yellow_ln!("==============================");
-    yellow_ln!("=  SudoRSA CLI by haverzard  =");
-    yellow_ln!("==============================\n");
-    white_ln!("Checking privileges...");
-    // Checking read privileges on /etc/shadow
-    match fs::File::open("/etc/shadow") {
-        Ok(_) => {
-            cyan_ln!("Privileges check result: ✅");
-        },
-        Err(_) => {
-            red_ln!("Privileges check result: ❌");
-            panic!("Please run this with sudo privileges");
-        }
-    }
+    utility::begin_check();
 
-    white_ln!("Checking private key...");
-    // Read private key
-    match fs::read_to_string("/rsa_pam.private") {
-        Ok(res) => {
-            let file_contents = res;
-            let der_encoded = file_contents
-                .lines()
-                .filter(|line| !line.starts_with("-"))
-                .fold(String::new(), |mut data, line| {
-                    data.push_str(&line);
-                    data
-                });
-            match base64::decode(&der_encoded) {
-                Ok(res) => {
-                    let der_bytes = res;
-                    match RSAPrivateKey::from_pkcs1(&der_bytes) {
-                        Ok(_) => {
-                            cyan_ln!("Private key check result: ✅")
-                        },
-                        Err(_) => bad_priv_key()
-                    }
-                },
-                Err(_) => bad_priv_key()
-            }
-        },
-        Err(_) => bad_priv_key()
-    }
+    let application =
+        gtk::Application::new(Some("com.github.haverzard.rsapam"), Default::default())
+            .expect("Initialization failed...");
 
-    let mut is_exit = false;
-    // CLI Menus
-    while !is_exit {
-        green_ln!("\nPlease choose a menu:");
-        green_ln!("1. Generating new private key");
-        green_ln!("2. Generating new public key");
-        green_ln!("3. Checking public key");
-        green_ln!("4. Exit");
-        white!("Enter your choice in number: ");
-        let _ = stdout().flush();
-        let mut line = String::from("");
-        stdin().read_line(&mut line).unwrap();
-        match line.trim().parse() {
-            Ok(res) => {
-                let choice : usize = res;
-                if choice == 4 {
-                    is_exit = true;
-                } else if choice == 3 {
-                    check_pub_key();
-                } else if choice == 2 {
-                    gen_pub_key();
-                } else if choice == 1 {
-                    gen_priv_key();
-                } else {
-                    red_ln!("Your input is out of range!");
-                }
-            },
-            Err(_) => {
-                red_ln!("Please enter a valid number!");
-            }
-        }
-    }
-    white_ln!("Goodbye!");
+    application.connect_activate(|app| {
+        build_ui(app);
+    });
+
+    application.run(&args().collect::<Vec<_>>());
 }

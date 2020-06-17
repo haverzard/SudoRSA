@@ -1,4 +1,6 @@
 # Sudo RSA
+![Rust](https://github.com/haverzard/SudoRSA/workflows/Rust/badge.svg)
+
 No need to type your password everytime! Sudo & polkit through RSA using this module.
 
 ## Prerequisites
