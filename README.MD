@@ -4,6 +4,7 @@ No need to type your password everytime! Sudo & polkit through RSA using this mo
 ## Prerequisites
 - Rust: https://rustup.rs/
 - Just: `cargo install just`
+- libpam
 
 ## Generating keys
 ### Private
@@ -26,13 +27,18 @@ Example:
     ...
 ```
 
+### Build cli & module
+Run `just build`
+
 ### Setup your keys
+***PLEASE BUILD FIRST***
 Run `just cli` and it will generate private key automatically. Please create public key to your selected device flash disk.
 
 ### Generating your pam_rsa.so
 #### Ubuntu and similars
+***PLEASE BUILD FIRST***
 Run `just ubuntu`
 
-#### Manual Setup
+#### Manual Setup (just in case above is not working)
 - Run `cargo build`
 - Rename and move `target/debug/librsapam.so` to the pam modules folder
