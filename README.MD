@@ -26,6 +26,12 @@ Example:
     ...
 ```
 
+### Setup your keys
+#### Private key
+Put your private key in in the file path /rsa_pam.private
+#### Public keys
+Put your public keys in the folder path /keys and we will iterate all of them.
+
 ### Generating your pam_rsa.so
 #### Ubuntu and similars
 Run `just ubuntu`
@@ -33,5 +39,3 @@ Run `just ubuntu`
 #### Manual Setup
 - Run `cargo build`
 - Rename and move `target/debug/librsapam.so` to the pam modules folder
-
-### Done
