@@ -1,0 +1,70 @@
+use crate::utility;
+use gio::prelude::*;
+use glib::clone;
+use gtk::prelude::*;
+
+pub struct MainFrameController;
+
+impl MainFrameController {
+    pub fn active_priv(mainframe: &MainFrame) {        
+        let res_label = &mainframe.res_label;
+        mainframe.gen_priv_btn.connect_clicked(clone!(@weak res_label => move |_| {
+            res_label.set_text("Generating new private key...");
+            utility::gen_priv_key();
+            res_label.set_text("Private key generation completes.");
+        }));
+    }
+}
+
+pub struct MainFrame {
+    pub frame: gtk::Box,
+    gen_priv_btn: gtk::Button,
+    gen_pub_btn: gtk::Button,
+    check_pub_btn: gtk::Button,
+    res_label: gtk::Label,
+}
+
+impl MainFrame {
+    pub fn new() -> MainFrame {
+        let frame = gtk::Box::new(gtk::Orientation::Horizontal, 10);
+        let v_box = gtk::Box::new(gtk::Orientation::Vertical, 10);
+        let title_box = gtk::Box::new(gtk::Orientation::Vertical, 10);
+        let btn_box = gtk::Box::new(gtk::Orientation::Vertical, 10);
+        let res_box = gtk::Box::new(gtk::Orientation::Vertical, 10);
+        let res_label = gtk::Label::new(None);
+        let title = gtk::Label::new(None);
+        let gen_priv_btn = MainFrame::gen_button("Generate private key");
+        let gen_pub_btn = MainFrame::gen_button("Generate public key");
+        let check_pub_btn = MainFrame::gen_button("Check public key");
+
+        // gen_pub_btn.connect_clicked(clone!(@weak application => move |_| { gen_pub_key(&application); }));
+
+        res_box.set_size_request(500, 300);
+        res_box.pack_end(&res_label, false, false, 0);
+        
+        title.set_markup("<span font_desc=\"50\">Sudo RSA</span>");
+        title_box.pack_end(&title, false, false, 0);
+        title_box.set_size_request(500, 200);
+
+        btn_box.pack_end(&check_pub_btn, false, false, 0);
+        btn_box.pack_end(&gen_pub_btn, false, false, 0);
+        btn_box.pack_end(&gen_priv_btn, false, false, 0);
+        btn_box.set_size_request(500, 300);
+
+        v_box.set_size_request(500, 800);
+        v_box.set_margin_start(250);
+        v_box.set_margin_end(250);
+        v_box.pack_start(&title_box, false, false, 0);
+        v_box.pack_start(&btn_box, false, false, 0);
+        v_box.pack_start(&res_box, false, false, 0);
+
+        frame.pack_start(&v_box, false, false, 0);
+
+        MainFrame { frame, gen_priv_btn, gen_pub_btn, check_pub_btn, res_label }
+    }
+    fn gen_button(label: &str) -> gtk::Button {
+        let btn = gtk::Button::new_with_label(label);
+        btn.set_size_request(200, 50);
+        btn
+    }
+}
