@@ -1,23 +1,23 @@
+#![allow(dead_code)]
 #[macro_use]
 extern crate colour;
 extern crate gio;
 extern crate glib;
 extern crate gtk;
 
+mod device;
 mod utility;
-mod mainframe;
-mod genframe;
+mod frame {
+    pub mod mainframe;
+    pub mod genframe;
+    pub mod checkframe;
+}
 
-use atk::prelude::*;
+use frame::mainframe;
 use gio::prelude::*;
-use glib::clone;
 use gtk::prelude::*;
 
 use std::env::args;
-
-// fn create_main_window(application: &gtk::Application) -> gtk::ApplicationWindow {
-
-// }
 
 fn build_ui(application: &gtk::Application) {
     let window = gtk::ApplicationWindow::new(application);
@@ -25,6 +25,7 @@ fn build_ui(application: &gtk::Application) {
     let mainframe = mainframe::MainFrame::new();
     mainframe::MainFrameController::active_priv(&mainframe);
     mainframe::MainFrameController::active_gen_pub(&application, &mainframe);
+    mainframe::MainFrameController::active_check_pub(&application, &mainframe);
 
     window.set_title("Sudo RSA");
     window.set_position(gtk::WindowPosition::Center);

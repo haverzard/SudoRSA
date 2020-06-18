@@ -1,5 +1,4 @@
-use crate::{ utility, genframe };
-use gio::prelude::*;
+use crate::{ utility, frame::genframe, frame::checkframe };
 use glib::clone;
 use gtk::prelude::*;
 
@@ -16,27 +15,42 @@ impl MainFrameController {
     }
 
     pub fn active_gen_pub(application: &gtk::Application, mainframe: &MainFrame) {
-        mainframe.gen_pub_btn.connect_clicked(clone!(@weak application => move |_| {
-            MainFrameController::gen_pub_key(&application);
+        let res_label = &mainframe.res_label;
+        mainframe.gen_pub_btn.connect_clicked(clone!(@weak application, @weak res_label => move |_| {
+            let sub_window = gtk::Window::new(gtk::WindowType::Toplevel);
+            let genframe = genframe::GenFrame::new();
+            genframe::GenFrameController::active_submit(&sub_window, &genframe, &res_label);
+
+            sub_window.set_title("Public Key Generator");
+            sub_window.set_position(gtk::WindowPosition::Center);
+            sub_window.set_default_size(400, 100);
+
+            sub_window.add(&genframe.frame);
+
+            application.add_window(&sub_window);
+
+            sub_window.show_all();
         }));
     }
 
-    fn gen_pub_key(application: &gtk::Application) {
-        let sub_window = gtk::Window::new(gtk::WindowType::Toplevel);
-        let genframe = genframe::GenFrame::new();
-        genframe::GenFrameController::active_submit(&genframe);
-    
-        sub_window.set_title("Pub Key Generation");
-        sub_window.set_position(gtk::WindowPosition::Center);
-        sub_window.set_default_size(400, 100);
-        
-        sub_window.add(&genframe.frame);
-        
-        application.add_window(&sub_window);
-        
-        sub_window.show_all();
+    pub fn active_check_pub(application: &gtk::Application, mainframe: &MainFrame) {
+        let res_label = &mainframe.res_label;
+        mainframe.check_pub_btn.connect_clicked(clone!(@weak application, @weak res_label => move |_| {
+            let sub_window = gtk::Window::new(gtk::WindowType::Toplevel);
+            let checkframe = checkframe::CheckFrame::new();
+            checkframe::CheckFrameController::active_submit(&sub_window, &checkframe, &res_label);
+
+            sub_window.set_title("Public Key Checker");
+            sub_window.set_position(gtk::WindowPosition::Center);
+            sub_window.set_default_size(400, 100);
+
+            sub_window.add(&checkframe.frame);
+
+            application.add_window(&sub_window);
+
+            sub_window.show_all();
+        }));
     }
-    
 }
 
 pub struct MainFrame {

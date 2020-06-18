@@ -1,15 +1,7 @@
-use std::{fs, process::Command, str, io::{stdin, stdout, Write}};
+use crate::device::path_traversal;
+use std::{fs, process::Command, io::{stdin, stdout, Write}};
 use rsa::{PublicKey, PaddingScheme, RSAPrivateKey, RSAPublicKey};
 use rand::{thread_rng, Rng, distributions::Alphanumeric, rngs::OsRng};
-
-pub fn path_traversal() -> Vec<String> {
-    let output = Command::new("lsblk")
-            .arg("--output")
-            .arg("MOUNTPOINT")
-            .output()
-            .expect("Something went wrong when using command (maybe lsblk not supported)");
-    str::from_utf8(&output.stdout).unwrap().split('\n').filter(|s| s.contains("/media")).map(|s| s.to_owned()).collect()
-}
 
 pub fn gen_priv_key() {
     // Private key generation
@@ -41,7 +33,7 @@ pub fn gen_pub_key() {
         Ok(res) => {
             // Checking range
             let choice : usize = res;
-            if choice >= 0 && choice < paths.len() {
+            if choice < paths.len() {
                 // Enter key file name
                 let _ = fs::create_dir(paths[choice].to_owned()+"/keys");
                 white!("Enter your file name: ");
@@ -119,14 +111,15 @@ pub fn pub_key_checker(pub_file_path: String) -> Option<()> {
                                 .encrypt(&mut rng, padding, &random_text[..])
                                 .expect("Something wrong happens on the encryption process");
                             let padding = PaddingScheme::new_pkcs1v15_encrypt();
-                            let dec_data = private_key
-                                .decrypt(padding, &enc_data)
-                                .expect("Something wrong happens on the decryption process");
-
-                            if dec_data == random_text {
-                                Some(())
-                            } else {
-                                None
+                            match private_key.decrypt(padding, &enc_data) {
+                                Ok(res) => {
+                                    if res == random_text {
+                                        Some(())
+                                    } else {
+                                        None
+                                    }
+                                },
+                                Err(_) => None
                             }
                         },
                         Err(_) => None
@@ -156,7 +149,7 @@ pub fn check_pub_key() {
         Ok(res) => {
             // Checking range
             let choice : usize = res;
-            if choice >= 0 && choice < paths.len() {
+            if choice < paths.len() {
                 // Enter key file name
                 let _ = fs::create_dir(paths[choice].to_owned()+"/keys");
                 white!("Enter your file name: ");

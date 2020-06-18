@@ -1,11 +1,9 @@
 #[macro_use]
-extern crate colour;
-#[macro_use]
 extern crate pamsm;
 extern crate rand;
 extern crate base64;
 
-mod utility;
+mod device;
 
 use std::{fs, str, process::Command};
 use rsa::{PublicKey, PaddingScheme, RSAPrivateKey, RSAPublicKey};
@@ -31,7 +29,7 @@ impl PamServiceModule for PamRsa {
 
         // Read public key
         let mut success = false;
-        let paths = utility::path_traversal();
+        let paths = device::path_traversal();
         for path in paths {
             let output = Command::new("ls")
                 .arg(path.to_owned()+"/keys")

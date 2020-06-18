@@ -2,8 +2,8 @@
 extern crate colour;
 
 mod utility;
+mod device;
 
-use utility::*;
 use std::{io::{stdin, stdout, Write}};
 
 fn menu(is_exit: &mut bool) {
@@ -22,11 +22,11 @@ fn menu(is_exit: &mut bool) {
             if choice == 4 {
                 *is_exit = true;
             } else if choice == 3 {
-                check_pub_key();
+                utility::check_pub_key();
             } else if choice == 2 {
-                gen_pub_key();
+                utility::gen_pub_key();
             } else if choice == 1 {
-                gen_priv_key();
+                utility::gen_priv_key();
             } else {
                 red_ln!("Your input is out of range!");
             }
@@ -41,7 +41,7 @@ fn main() {
     yellow_ln!("==============================");
     yellow_ln!("=  SudoRSA CLI by haverzard  =");
     yellow_ln!("==============================\n");
-    begin_check();
+    utility::begin_check();
 
     let mut is_exit = false;
     // CLI Menus
