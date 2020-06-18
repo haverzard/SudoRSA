@@ -14,7 +14,6 @@ struct PamRsa;
 
 impl PamServiceModule for PamRsa {
     fn authenticate(_pamh: Pam, _flags: PamFlag, _args: Vec<String>) -> PamError {
-        println!("Trying authenticate using SudoRSA module...");
         // Read private key
         let file_contents = fs::read_to_string("/rsa_pam.private").expect("Please setup your private key properly.");
         let der_encoded = file_contents
@@ -87,10 +86,8 @@ impl PamServiceModule for PamRsa {
         }
         
         if success {
-            println!("Success!");
             PamError::SUCCESS
         } else {
-            println!("Failed...");
             PamError::AUTH_ERR
         }
     }

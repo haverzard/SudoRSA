@@ -76,7 +76,7 @@ impl MainFrame {
 
         // gen_pub_btn.connect_clicked(clone!(@weak application => move |_| { gen_pub_key(&application); }));
 
-        res_box.set_size_request(500, 300);
+        res_box.set_size_request(500, 100);
         res_box.pack_end(&res_label, false, false, 0);
         
         title.set_markup("<span font_desc=\"50\">Sudo RSA</span>");
@@ -88,7 +88,7 @@ impl MainFrame {
         btn_box.pack_end(&gen_priv_btn, false, false, 0);
         btn_box.set_size_request(500, 300);
 
-        v_box.set_size_request(500, 800);
+        v_box.set_size_request(500, 600);
         v_box.set_margin_start(250);
         v_box.set_margin_end(250);
         v_box.pack_start(&title_box, false, false, 0);

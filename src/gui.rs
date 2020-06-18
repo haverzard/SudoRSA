@@ -29,7 +29,7 @@ fn build_ui(application: &gtk::Application) {
 
     window.set_title("Sudo RSA");
     window.set_position(gtk::WindowPosition::Center);
-    window.set_size_request(1000, 800);
+    window.set_size_request(1000, 600);
 
     window.add(&mainframe.frame);
     window.show_all();
