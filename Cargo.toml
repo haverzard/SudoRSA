@@ -16,8 +16,6 @@ name = "gui"
 path = "src/gui.rs"
 
 [dependencies]
-atk = "^0"
-gdk = "^0"
 glib = "^0"
 pamsm = "0.3.3"
 rsa = "0.3.0"
