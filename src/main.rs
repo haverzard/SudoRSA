@@ -19,28 +19,12 @@ use std::env::args;
 
 // }
 
-fn gen_pub_key(application: &gtk::Application) {
-    //utility::gen_priv_key();
-    let sub_window = gtk::Window::new(gtk::WindowType::Toplevel);
-    let genframe = genframe::GenFrame::new();
-
-    sub_window.set_title("Pub Key Generation");
-    sub_window.set_position(gtk::WindowPosition::Center);
-    sub_window.set_default_size(400, 200);
-    
-    
-    sub_window.add(&genframe.frame);
-    
-    application.add_window(&sub_window);
-    
-    sub_window.show_all();
-}
-
 fn build_ui(application: &gtk::Application) {
     let window = gtk::ApplicationWindow::new(application);
 
     let mainframe = mainframe::MainFrame::new();
     mainframe::MainFrameController::active_priv(&mainframe);
+    mainframe::MainFrameController::active_gen_pub(&application, &mainframe);
 
     window.set_title("Sudo RSA");
     window.set_position(gtk::WindowPosition::Center);

@@ -2,6 +2,15 @@ use std::{fs, process::Command, str, io::{stdin, stdout, Write}};
 use rsa::{PublicKey, PaddingScheme, RSAPrivateKey, RSAPublicKey};
 use rand::{thread_rng, Rng, distributions::Alphanumeric, rngs::OsRng};
 
+pub fn path_traversal() -> Vec<String> {
+    let output = Command::new("lsblk")
+            .arg("--output")
+            .arg("MOUNTPOINT")
+            .output()
+            .expect("Something went wrong when using command (maybe lsblk not supported)");
+    str::from_utf8(&output.stdout).unwrap().split('\n').filter(|s| s.contains("/media")).map(|s| s.to_owned()).collect()
+}
+
 pub fn gen_priv_key() {
     // Private key generation
     white_ln!("Generating new private key...");
@@ -11,22 +20,17 @@ pub fn gen_priv_key() {
         .arg("/rsa_pam.private")
         .arg("1024")
         .output()
-        .expect("Something went wrong when using command (maybe lsblk not supported)");
+        .expect("Something went wrong when using command (maybe openssl not supported)");
     cyan_ln!("Private key generation result: ✅");
 }
 
 pub fn gen_pub_key() {
     // List of devices' paths
-    let output = Command::new("lsblk")
-        .arg("--output")
-        .arg("MOUNTPOINT")
-        .output()
-        .expect("Something went wrong when using command (maybe lsblk not supported)");
-    let paths : Vec<&str> = str::from_utf8(&output.stdout).unwrap().split('\n').filter(|s| s != &"" && s != &"/").collect();
+    let paths = path_traversal();
 
     // Choose a device
     green_ln!("Choose the device you want to setup:");
-    for i in 1..paths.len() {
+    for i in 0..paths.len() {
         green_ln!("{}. {}", i, paths[i]);
     }
     white!("Enter your choice in number: ");
@@ -37,7 +41,7 @@ pub fn gen_pub_key() {
         Ok(res) => {
             // Checking range
             let choice : usize = res;
-            if choice > 0 && choice < paths.len() {
+            if choice >= 0 && choice < paths.len() {
                 // Enter key file name
                 let _ = fs::create_dir(paths[choice].to_owned()+"/keys");
                 white!("Enter your file name: ");
@@ -46,19 +50,7 @@ pub fn gen_pub_key() {
                 stdin().read_line(&mut line).unwrap();
                 
                 // Public key generation
-                white_ln!("Generating new public key...");
-                let _ = Command::new("openssl")
-                    .arg("rsa")
-                    .arg("-in")
-                    .arg("/rsa_pam.private")
-                    .arg("-out")
-                    .arg(paths[choice].to_owned()+"/keys/"+line.trim())
-                    .arg("-pubout")
-                    .arg("-outform")
-                    .arg("PEM")
-                    .output()
-                    .expect("Something went wrong when using command (maybe lsblk not supported)");
-                cyan_ln!("Public key generation result: ✅");
+                pub_key_generator(paths[choice].to_owned()+"/keys/"+line.trim());
             } else {
                 red_ln!("Your input is out of range!");
             }
@@ -67,6 +59,22 @@ pub fn gen_pub_key() {
             red_ln!("Please enter a valid number!");
         }
     };
+}
+
+pub fn pub_key_generator(pub_file_path: String) {
+    white_ln!("Generating new public key...");
+    let _ = Command::new("openssl")
+        .arg("rsa")
+        .arg("-in")
+        .arg("/rsa_pam.private")
+        .arg("-out")
+        .arg(pub_file_path)
+        .arg("-pubout")
+        .arg("-outform")
+        .arg("PEM")
+        .output()
+        .expect("Something went wrong when using command (maybe openssl not supported)");
+    cyan_ln!("Public key generation result: ✅");
 }
 
 pub fn pub_key_checker(pub_file_path: String) -> Option<()> {
@@ -133,16 +141,11 @@ pub fn pub_key_checker(pub_file_path: String) -> Option<()> {
 
 pub fn check_pub_key() {
     // List of devices' paths
-    let output = Command::new("lsblk")
-        .arg("--output")
-        .arg("MOUNTPOINT")
-        .output()
-        .expect("Something went wrong when using command (maybe lsblk not supported)");
-    let paths : Vec<&str> = str::from_utf8(&output.stdout).unwrap().split('\n').filter(|s| s != &"" && s != &"/").collect();
+    let paths = path_traversal();
 
     // Choose a device
     green_ln!("Choose the device you want to check:");
-    for i in 1..paths.len() {
+    for i in 0..paths.len() {
         green_ln!("{}. {}", i, paths[i]);
     }
     white!("Enter your choice in number: ");
@@ -153,7 +156,7 @@ pub fn check_pub_key() {
         Ok(res) => {
             // Checking range
             let choice : usize = res;
-            if choice > 0 && choice < paths.len() {
+            if choice >= 0 && choice < paths.len() {
                 // Enter key file name
                 let _ = fs::create_dir(paths[choice].to_owned()+"/keys");
                 white!("Enter your file name: ");

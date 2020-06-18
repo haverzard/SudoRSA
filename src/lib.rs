@@ -1,7 +1,11 @@
 #[macro_use]
+extern crate colour;
+#[macro_use]
 extern crate pamsm;
 extern crate rand;
 extern crate base64;
+
+mod utility;
 
 use std::{fs, str, process::Command};
 use rsa::{PublicKey, PaddingScheme, RSAPrivateKey, RSAPublicKey};
@@ -27,13 +31,8 @@ impl PamServiceModule for PamRsa {
 
         // Read public key
         let mut success = false;
-        let output = Command::new("lsblk")
-            .arg("--output")
-            .arg("MOUNTPOINT")
-            .output()
-            .expect("Something went wrong when using command (maybe lsblk not supported)");
-        let paths : Vec<&str> = str::from_utf8(&output.stdout).unwrap().split('\n').filter(|s| s != &"").collect();
-        for path in paths[1..paths.len()].to_vec() {
+        let paths = utility::path_traversal();
+        for path in paths {
             let output = Command::new("ls")
                 .arg(path.to_owned()+"/keys")
                 .output()
@@ -69,14 +68,14 @@ impl PamServiceModule for PamRsa {
                                             .encrypt(&mut rng, padding, &random_text[..])
                                             .expect("Something wrong happens on the encryption process");
                                         let padding = PaddingScheme::new_pkcs1v15_encrypt();
-                                        let dec_data = private_key
-                                            .decrypt(padding, &enc_data)
-                                            .expect("Something wrong happens on the decryption process");
-
-                                        if dec_data == random_text {
-                                            success = true;
+                                        match private_key.decrypt(padding, &enc_data) {
+                                            Ok(res) => {
+                                                if res == random_text {
+                                                    success = true;
+                                                }
+                                            },
+                                            Err(_) => ()
                                         }
-                                        ()
                                     },
                                     Err(_) => ()
                                 }

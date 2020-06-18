@@ -1,4 +1,4 @@
-use crate::utility;
+use crate::{ utility, genframe };
 use gio::prelude::*;
 use glib::clone;
 use gtk::prelude::*;
@@ -6,7 +6,7 @@ use gtk::prelude::*;
 pub struct MainFrameController;
 
 impl MainFrameController {
-    pub fn active_priv(mainframe: &MainFrame) {        
+    pub fn active_priv(mainframe: &MainFrame) {
         let res_label = &mainframe.res_label;
         mainframe.gen_priv_btn.connect_clicked(clone!(@weak res_label => move |_| {
             res_label.set_text("Generating new private key...");
@@ -14,6 +14,29 @@ impl MainFrameController {
             res_label.set_text("Private key generation completes.");
         }));
     }
+
+    pub fn active_gen_pub(application: &gtk::Application, mainframe: &MainFrame) {
+        mainframe.gen_pub_btn.connect_clicked(clone!(@weak application => move |_| {
+            MainFrameController::gen_pub_key(&application);
+        }));
+    }
+
+    fn gen_pub_key(application: &gtk::Application) {
+        let sub_window = gtk::Window::new(gtk::WindowType::Toplevel);
+        let genframe = genframe::GenFrame::new();
+        genframe::GenFrameController::active_submit(&genframe);
+    
+        sub_window.set_title("Pub Key Generation");
+        sub_window.set_position(gtk::WindowPosition::Center);
+        sub_window.set_default_size(400, 100);
+        
+        sub_window.add(&genframe.frame);
+        
+        application.add_window(&sub_window);
+        
+        sub_window.show_all();
+    }
+    
 }
 
 pub struct MainFrame {
