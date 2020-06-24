@@ -1,4 +1,5 @@
 use crate::{ utility, device };
+use std::{ fs };
 use glib::clone;
 use gtk::prelude::*;
 
@@ -17,6 +18,7 @@ impl GenFrameController {
                             if trimmed_file_path != "" {
                                 window.close();
                                 res_label.set_text("Generating new public key...");
+                                let _ = fs::create_dir(format!("{}/keys", device_path));
                                 utility::pub_key_generator(format!("{}/keys/{}", device_path, file_path.trim()));
                                 res_label.set_text("Public key generation completes.");
                             }
